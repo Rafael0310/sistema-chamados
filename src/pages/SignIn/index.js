@@ -1,13 +1,25 @@
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 import './signin.css'
 
 import logo from '../../assets/logo.png'
 import { Link } from 'react-router-dom'
 
+import { AuthContext } from '../../contexts/auth'
+
 export default function SignIn(){
 
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+
+    const { signIn } = useContext(AuthContext)
+
+    function handleSignIn(e){
+        e.preventDefault();
+
+        if(email && password){
+            signIn(email, password)
+        }
+    }
 
     return(
         <div className="container-center">
@@ -32,7 +44,7 @@ export default function SignIn(){
                         onChange={(e) => setPassword(e.target.value)}
                     />
 
-                    <button type='submit'>Acessar</button>
+                    <button type='submit' onSubmit={signIn}>Acessar</button>
                 </form>
                 <Link to='/register'>Criar uma conta</Link>
             </div>
