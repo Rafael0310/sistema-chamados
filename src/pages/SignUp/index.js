@@ -14,11 +14,11 @@ export default function SignIn(){
         loadingAuth 
     } = useContext(AuthContext)
 
-    function handleSubmit(e){
+    async function handleSubmit(e){
         e.preventDefault()
 
         if(name && email && password){
-            signUp(name, email, password)
+            await signUp(name, email, password)
         }
     }
 

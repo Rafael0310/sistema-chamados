@@ -1,6 +1,9 @@
 import { useState, createContext, useEffect } from "react"
 import { auth, db } from '../services/firebaseConnection'
-import { createUserWithEmailAndPassword } from "firebase/auth"
+import { createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    signOut
+} from "firebase/auth"
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { toast } from "react-toastify"
 
@@ -12,12 +15,51 @@ function AuthProvider({children}){
 
     const[user, setUser] = useState(null)
     const[loadingAuth, setLoadingAuth] = useState(false)
+    const[loading, setLoading] = useState(false)
 
     const navigate = useNavigate()
 
-    // Login
-    function signIn(email, password){
+    useEffect(() => {
+        async function loadUser(){
+            const storageUser = localStorage.getItem('@ticketsPRO')
 
+            if(storageUser){
+                setUser(JSON.parse(storageUser))
+            }
+            
+            setLoading(false)
+        }
+
+        loadUser()
+    }, [])
+
+    // Login
+    async function signIn(email, password){
+        setLoadingAuth(true)
+
+        signInWithEmailAndPassword(auth, email, password).then(async(value) => {
+            let uid = value.user.uid
+
+            const docRef = doc(db, "users", uid)
+            const docSnap = await getDoc(docRef)
+
+            let data = {
+                uid: uid,
+                nome: docSnap.data().nome,
+                email: value.user.email,
+                avatarUrl: docSnap.data().avatarUrl
+            }
+
+            setUser(data)
+            storageUser(data)
+            setLoadingAuth(false)
+            toast.success('Bem-vindo(a) de volta!')
+            navigate("dashboard", {replace:true})
+        }).catch((error) => {
+            console.log(error)
+            setLoadingAuth(false)
+            toast.error('Ops algo deu errado!')
+        })
     }
 
     // Cadastro
@@ -52,7 +94,13 @@ function AuthProvider({children}){
     }
 
     function storageUser(data){
-        localStorage.setItem('@ticketsPRO')
+        localStorage.setItem('@ticketsPRO', JSON.stringify(data))
+    }
+
+    async function logOut(){
+        await signOut(auth)
+        localStorage.removeItem('@ticketsPRO')
+        setUser(null)
     }
 
     return(
@@ -63,6 +111,8 @@ function AuthProvider({children}){
             signIn,
             signUp,
             loadingAuth,
+            loading,
+            logOut,
             navigate
         }}>
             {children}
